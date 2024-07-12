@@ -1,0 +1,108 @@
+﻿<Window x:Class="CustomersTestApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:CustomersTestApp.ViewModels"
+        xmlns:cta="clr-namespace:CustomersTestApp"
+        xmlns:views="clr-namespace:CustomersTestApp.Views"
+        Title="Customer Editor" Height="600" Width="800">
+    <Window.Resources>
+        <DataTemplate x:Key="EmptyTemplate">
+            <views:EmptyView />
+        </DataTemplate>
+
+        <ControlTemplate x:Key="validationTemplate">
+            <DockPanel>
+                <TextBlock Foreground="Red" DockPanel.Dock="Right" Margin="5,0,0,0" 
+                           Text="{Binding ElementName=customAdorner, Path=AdornedElement.(Validation.Errors)[0].ErrorContent}"/>
+                <AdornedElementPlaceholder x:Name="customAdorner"/>
+            </DockPanel>
+        </ControlTemplate>
+
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <Style x:Key="NumericTextBoxStyle" TargetType="TextBox">
+            <EventSetter Event="PreviewTextInput" Handler="NumericTextBox_PreviewTextInput"/>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="3*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="10">
+            <TextBox Width="200" Margin="0,0,10,0" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
+            <ComboBox Width="100" SelectedValue="{Binding FilterType, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Content">
+                <ComboBoxItem Content="Name" IsSelected="True"/>
+                <ComboBoxItem Content="Email" />
+            </ComboBox>
+            <Button Content="Add New Customer" Command="{Binding ShowAddCustomerFormCommand}" Margin="0,0,0,0" />
+        </StackPanel>
+
+        <ListBox Grid.Row="1" Grid.Column="0" ItemsSource="{Binding CustomersCollectionView}" SelectedItem="{Binding SelectedCustomer}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Text="{Binding Email}" />
+                        <TextBlock Text="{Binding Discount, StringFormat='{}{0}%'}" />
+                        <TextBlock Text="{Binding Id}" />
+                        <Button Content="Remove" 
+                                Command="{Binding DataContext.RemoveCustomerCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" 
+                                CommandParameter="{Binding}" 
+                                IsEnabled="{Binding CanRemove}"  Width="166"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="1" Grid.Column="1">
+            <ContentControl Content="{Binding CustomerEditorViewModel}">
+                <ContentControl.Style>
+                    <Style TargetType="ContentControl">
+                        <Setter Property="ContentTemplate">
+                            <Setter.Value>
+                                <DataTemplate>
+                                    <views:CustomerEditorView />
+                                </DataTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CustomerEditorViewModel.EditingCustomer}" Value="{x:Null}">
+                                <Setter Property="ContentTemplate" Value="{StaticResource EmptyTemplate}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ContentControl.Style>
+            </ContentControl>
+
+            <StackPanel Visibility="{Binding IsAddCustomerFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="New Customer Details" HorizontalAlignment="Center" FontWeight="Bold" Margin="0,0,0,10"/>
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <TextBlock Text="Name:" Width="60" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding NewCustomerName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Validation.ErrorTemplate="{StaticResource validationTemplate}" Width="200"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <TextBlock Text="Email:" Width="60" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding NewCustomerEmail, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Validation.ErrorTemplate="{StaticResource validationTemplate}" Width="200"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    
+                    <TextBlock Text="Discount:" Width="60" VerticalAlignment="Center"/>
+                    <TextBox Text="{Binding NewCustomerDiscount, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, TargetNullValue='', FallbackValue=0}"
+                             Validation.ErrorTemplate="{StaticResource validationTemplate}"
+                             Width="200"
+                             Style="{StaticResource NumericTextBoxStyle}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <Button Content="Save" HorizontalAlignment="Left" Command="{Binding AddCustomerCommand}" Margin="10,10,100,10" Width="167" />
+                    <Button Content="Cancel" Command="{Binding HideAddCustomerFormCommand}" Margin="10,10,100,10" Width="166" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>
